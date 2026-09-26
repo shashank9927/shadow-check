@@ -1,0 +1,19 @@
+{
+  "name": "@shadowcheck/api",
+  "private": true,
+  "type": "module",
+  "scripts": { "dev": "tsx watch src/main.ts", "build": "tsc -p tsconfig.json", "typecheck": "tsc --noEmit -p tsconfig.json", "start": "tsx src/main.ts" },
+  "dependencies": {
+    "@fastify/cors": "^11.1.0",
+    "@fastify/helmet": "^13.0.2",
+    "@shadowcheck/contracts": "workspace:*",
+    "@shadowcheck/database": "workspace:*",
+    "@shadowcheck/redaction": "workspace:*",
+    "@shadowcheck/shared": "workspace:*",
+    "bullmq": "^5.63.0",
+    "fastify": "^5.5.0",
+    "ioredis": "^5.8.2",
+    "yaml": "^2.8.1",
+    "zod": "^4.1.12"
+  }
+}
