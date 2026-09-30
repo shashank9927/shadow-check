@@ -1,0 +1,15 @@
+{
+  "name": "@shadowcheck/worker",
+  "private": true,
+  "type": "module",
+  "scripts": { "dev": "tsx watch src/main.ts", "build": "tsc -p tsconfig.json", "typecheck": "tsc --noEmit -p tsconfig.json", "start": "tsx src/main.ts" },
+  "dependencies": {
+    "@shadowcheck/comparison": "workspace:*",
+    "@shadowcheck/contracts": "workspace:*",
+    "@shadowcheck/database": "workspace:*",
+    "@shadowcheck/redaction": "workspace:*",
+    "@shadowcheck/shared": "workspace:*",
+    "bullmq": "^5.63.0",
+    "ioredis": "^5.8.2"
+  }
+}
