@@ -1,0 +1,10 @@
+[
+  { "name": "Get user", "method": "GET", "path": "/users/1", "headers": { "Accept": "application/json" } },
+  { "name": "Get products", "method": "GET", "path": "/products" },
+  { "name": "Intentional server error", "method": "GET", "path": "/orders/failure" },
+  { "name": "Latency check", "method": "GET", "path": "/slow" },
+  { "name": "Health check", "method": "GET", "path": "/health" },
+  { "name": "Dynamic response", "method": "GET", "path": "/timestamp" },
+  { "name": "Additive change", "method": "GET", "path": "/catalog" },
+  { "name": "Safe redacted order", "method": "POST", "path": "/orders", "headers": { "Authorization": "Bearer demo-token", "Content-Type": "application/json" }, "body": { "email": "anna@example.com", "quantity": 2 } }
+]
