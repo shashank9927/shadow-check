@@ -1,0 +1,27 @@
+# Dependencies and package-manager files
+node_modules/
+.pnpm-store/
+
+# Generated build and test output
+dist/
+.next/
+coverage/
+playwright-report/
+test-results/
+*.tsbuildinfo
+next-env.d.ts
+
+# Local environment and secrets
+.env*
+!.env.example
+*.pem
+*.key
+*.p12
+*.pfx
+
+# Logs and operating-system files
+*.log
+npm-debug.log*
+pnpm-debug.log*
+Thumbs.db
+.DS_Store
