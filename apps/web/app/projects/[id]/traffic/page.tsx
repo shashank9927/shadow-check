@@ -1,0 +1,14 @@
+"use client";
+import { ChangeEvent, useState } from "react";
+import { useParams } from "next/navigation";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { api } from "../../../lib";
+import { AppHeader, ErrorNotice, Panel } from "../../../components";
+
+export default function TrafficPage() {
+  const { id } = useParams<{ id: string }>(); const client = useQueryClient(); const [message, setMessage] = useState<string | null>(null);
+  const traffic = useQuery<any>({ queryKey: ["traffic", id], queryFn: () => api(`/api/v1/projects/${id}/traffic?limit=100`) });
+  const upload = useMutation({ mutationFn: (payload: any) => api(`/api/v1/projects/${id}/traffic/import`, { method: "POST", body: JSON.stringify(payload) }), onSuccess: (response: any) => { setMessage(`Imported ${response.data.imported} request(s). Sensitive fields were redacted before storage.`); client.invalidateQueries({ queryKey: ["traffic", id] }); } });
+  const onFile = async (event: ChangeEvent<HTMLInputElement>) => { const file = event.target.files?.[0]; if (!file) return; try { const content = JSON.parse(await file.text()); upload.mutate(file.name.toLowerCase().endsWith(".har") ? { format: "har", har: content } : { format: "shadowcheck", traffic: content }); } catch { setMessage("The selected file is not valid JSON."); } };
+  return <main className="shell"><AppHeader projectId={id} /><div className="mb-6"><p className="mb-1 text-sm font-medium text-blue-700">TRAFFIC DATASET</p><h1 className="m-0 text-3xl font-semibold tracking-tight">Recorded requests</h1><p className="mt-2 text-slate-600">Imports accept ShadowCheck JSON and HAR files. Headers and JSON fields covered by redaction rules are sanitized before persistence.</p></div><Panel title="Import traffic"><div className="flex flex-wrap items-center gap-3 p-5"><input aria-label="Traffic file" type="file" accept=".json,.har,application/json" onChange={onFile} /><span className="text-sm text-slate-500">Up to the configured import size limit.</span></div></Panel>{message && <p className="mt-4 rounded-md bg-blue-50 p-3 text-sm text-blue-800">{message}</p>}{upload.isError && <div className="mt-4"><ErrorNotice error={upload.error} /></div>}<div className="mt-5"><Panel title={`Imported traffic (${traffic.data?.data.length ?? 0})`}><table className="table"><thead><tr><th>Method</th><th>Path</th><th>Name</th><th>Body</th><th>Last used</th></tr></thead><tbody>{traffic.data?.data.map((item: any) => <tr key={item.id}><td><span className="code font-semibold">{item.method}</span></td><td className="code">{item.path}</td><td>{item.name || "—"}</td><td className="code max-w-xs">{item.body ? JSON.stringify(item.body) : "—"}</td><td>{item.lastUsedAt ? new Date(item.lastUsedAt).toLocaleString() : "Never"}</td></tr>)}{!traffic.data?.data.length && <tr><td colSpan={5} className="text-center text-slate-500">No traffic has been imported.</td></tr>}</tbody></table></Panel></div></main>;
+}

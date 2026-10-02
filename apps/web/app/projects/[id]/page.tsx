@@ -1,0 +1,17 @@
+"use client";
+import Link from "next/link";
+import { useParams } from "next/navigation";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { api, formatDate } from "../../lib";
+import { AppHeader, Badge, ErrorNotice, Metric, Panel } from "../../components";
+
+export default function ProjectOverviewPage() {
+  const { id } = useParams<{ id: string }>(); const client = useQueryClient();
+  const project = useQuery<any>({ queryKey: ["project", id], queryFn: () => api(`/api/v1/projects/${id}`) });
+  const runs = useQuery<any>({ queryKey: ["runs", id], queryFn: () => api(`/api/v1/projects/${id}/runs?limit=10`), refetchInterval: 2000 });
+  const start = useMutation({ mutationFn: () => api<any>(`/api/v1/projects/${id}/runs`, { method: "POST" }), onSuccess: () => client.invalidateQueries({ queryKey: ["runs", id] }) });
+  if (project.isLoading) return <main className="shell"><AppHeader /><p>Loading project…</p></main>;
+  if (project.isError) return <main className="shell"><AppHeader /><ErrorNotice error={project.error} /></main>;
+  const item = project.data.data; const lastRun = runs.data?.data[0];
+  return <main className="shell"><AppHeader projectId={id} /><div className="mb-6 flex flex-wrap items-end justify-between gap-4"><div><p className="mb-1 text-sm font-medium text-blue-700">PROJECT</p><h1 className="m-0 text-3xl font-semibold tracking-tight">{item.name}</h1><p className="mb-0 mt-2 text-slate-600">{item.description || "No description"}</p></div><button className="btn" onClick={() => start.mutate()} disabled={start.isPending}>{start.isPending ? "Queueing…" : "Run replay"}</button></div>{start.isError && <div className="mb-4"><ErrorNotice error={start.error} /></div>}<div className="mb-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4"><Metric label="Traffic requests" value={item._count.trafficRequests} /><Metric label="Latest pass rate" value={lastRun ? `${lastRun.totalRequests ? Math.round(lastRun.passed / lastRun.totalRequests * 100) : 0}%` : "—"} /><Metric label="Latest regressions" value={lastRun?.regressions ?? "—"} /><Metric label="Latest warnings" value={lastRun?.warnings ?? "—"} /></div><div className="grid gap-5 lg:grid-cols-5"><Panel title="Environments"><div className="divide-y divide-slate-100">{item.environments.map((environment: any) => <div className="p-5" key={environment.type}><p className="mb-2 text-xs font-bold text-slate-500">{environment.type}</p><p className="code m-0 text-sm">{environment.baseUrl}</p><p className="mb-0 mt-2 text-sm text-slate-500">{environment.timeoutMs} ms timeout · {environment.enabled ? "Enabled" : "Disabled"}</p></div>)}</div></Panel><div className="lg:col-span-4"><Panel title="Replay runs" action={<Link className="text-sm font-semibold text-blue-700" href={`/projects/${id}/traffic`}>View traffic</Link>}><table className="table"><thead><tr><th>Run</th><th>Date</th><th>Requests</th><th>Pass</th><th>Warnings</th><th>Breaking</th><th>Status</th></tr></thead><tbody>{runs.data?.data.map((run: any) => <tr key={run.id}><td><Link className="font-semibold text-blue-700" href={`/runs/${run.id}`}>#{run.id.slice(-6)}</Link></td><td>{formatDate(run.createdAt)}</td><td>{run.completedRequests}/{run.totalRequests}</td><td>{run.passed}</td><td>{run.warnings}</td><td>{run.regressions}</td><td><Badge value={run.status} /></td></tr>)}{!runs.data?.data.length && <tr><td colSpan={7} className="text-center text-slate-500">Start a replay when the traffic dataset is ready.</td></tr>}</tbody></table></Panel></div></div></main>;
+}
