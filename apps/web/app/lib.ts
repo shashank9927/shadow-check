@@ -1,0 +1,4 @@
+export const apiBase = (process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000").replace(/\/$/, "");
+export async function api<T>(path: string, init?: RequestInit): Promise<T> { const response = await fetch(`${apiBase}${path}`, { ...init, headers: { "content-type": "application/json", ...(init?.headers ?? {}) }, cache: "no-store" }); const payload = response.status === 204 ? null : await response.json(); if (!response.ok) throw new Error(payload?.error?.message ?? `Request failed (${response.status})`); return payload; }
+export const badgeClass = (value: string) => `badge badge-${value.toLowerCase().replace("regression", "breaking")}`;
+export const formatDate = (date?: string | null) => date ? new Intl.DateTimeFormat(undefined, { dateStyle: "medium", timeStyle: "short" }).format(new Date(date)) : "—";

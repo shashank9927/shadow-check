@@ -1,0 +1,10 @@
+"use client";
+import Link from "next/link";
+import { type ReactNode } from "react";
+import { badgeClass } from "./lib";
+
+export function AppHeader({ projectId }: { projectId?: string }) { return <header className="mb-8 flex flex-wrap items-center justify-between gap-4"><Link href="/" className="flex items-center gap-3"><span className="grid h-9 w-9 place-items-center rounded-lg bg-blue-700 font-mono text-lg font-bold text-white">S</span><span><strong className="block text-lg">ShadowCheck</strong><span className="text-sm text-slate-500">API traffic replay</span></span></Link>{projectId && <nav className="flex flex-wrap gap-1 text-sm text-slate-600"><Link className="rounded-md px-3 py-2 hover:bg-white" href={`/projects/${projectId}`}>Overview</Link><Link className="rounded-md px-3 py-2 hover:bg-white" href={`/projects/${projectId}/traffic`}>Traffic</Link><Link className="rounded-md px-3 py-2 hover:bg-white" href={`/projects/${projectId}/configuration`}>Configuration</Link></nav>}</header>; }
+export function Badge({ value }: { value: string }) { return <span className={badgeClass(value)}>{value.replace("REGRESSION", "BREAKING")}</span>; }
+export function Metric({ label, value, detail }: { label: string; value: string | number; detail?: string }) { return <div className="card p-4"><p className="mb-1 text-sm text-slate-500">{label}</p><p className="m-0 text-2xl font-semibold tracking-tight">{value}</p>{detail && <p className="mb-0 mt-2 text-xs text-slate-500">{detail}</p>}</div>; }
+export function Panel({ title, children, action }: { title: string; children: ReactNode; action?: ReactNode }) { return <section className="card overflow-hidden"><div className="flex items-center justify-between gap-3 border-b border-slate-200 px-5 py-4"><h2 className="m-0 text-base font-semibold">{title}</h2>{action}</div>{children}</section>; }
+export function ErrorNotice({ error }: { error: unknown }) { return <div className="rounded-lg border border-red-300 bg-red-50 p-4 text-red-800">{error instanceof Error ? error.message : "Something went wrong."}</div>; }
