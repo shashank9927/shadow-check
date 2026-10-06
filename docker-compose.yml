@@ -1,0 +1,81 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: shadowcheck
+      POSTGRES_USER: shadowcheck
+      POSTGRES_PASSWORD: shadowcheck
+    ports: ["5432:5432"]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U shadowcheck -d shadowcheck"]
+      interval: 3s
+      timeout: 3s
+      retries: 20
+    volumes: ["postgres-data:/var/lib/postgresql/data"]
+  redis:
+    image: redis:7-alpine
+    ports: ["6379:6379"]
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 3s
+      timeout: 3s
+      retries: 20
+  api:
+    build: .
+    command: sh -c "pnpm --filter @shadowcheck/database prisma:deploy && pnpm --filter @shadowcheck/api start"
+    environment: &app-environment
+      NODE_ENV: development
+      DATABASE_URL: postgresql://shadowcheck:shadowcheck@postgres:5432/shadowcheck?schema=public
+      REDIS_URL: redis://redis:6379
+      API_PORT: 4000
+      ENCRYPTION_KEY: AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=
+      ALLOW_PRIVATE_NETWORK_TARGETS: "true"
+      REPLAY_CONCURRENCY: 5
+      DEFAULT_REQUEST_TIMEOUT_MS: 5000
+      MAX_RESPONSE_BODY_BYTES: 1048576
+      MAX_IMPORT_FILE_BYTES: 5242880
+      REPLAY_RESULT_RETENTION_DAYS: 30
+      LOG_LEVEL: info
+    ports: ["4000:4000"]
+    depends_on:
+      postgres: { condition: service_healthy }
+      redis: { condition: service_healthy }
+  worker:
+    build: .
+    command: pnpm --filter @shadowcheck/worker start
+    environment: *app-environment
+    depends_on:
+      api: { condition: service_started }
+  web:
+    build: .
+    command: pnpm --filter @shadowcheck/web start
+    environment:
+      NEXT_PUBLIC_API_URL: http://localhost:4000
+      PORT: 3000
+    ports: ["3000:3000"]
+    depends_on:
+      api: { condition: service_started }
+  baseline:
+    build: .
+    command: pnpm --filter @shadowcheck/fixtures start
+    environment: { FIXTURE_VARIANT: baseline, PORT: 3001 }
+    ports: ["3001:3001"]
+  candidate:
+    build: .
+    command: pnpm --filter @shadowcheck/fixtures start
+    environment: { FIXTURE_VARIANT: candidate, PORT: 3002 }
+    ports: ["3002:3002"]
+  seed:
+    build: .
+    profiles: ["demo"]
+    command: sh -c "sleep 5 && pnpm db:seed"
+    environment:
+      <<: *app-environment
+      DEMO_BASELINE_URL: http://baseline:3001
+      DEMO_CANDIDATE_URL: http://candidate:3002
+    depends_on:
+      api: { condition: service_started }
+      baseline: { condition: service_started }
+      candidate: { condition: service_started }
+volumes:
+  postgres-data:
